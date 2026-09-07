@@ -171,6 +171,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         SelectedContainerFormat = ContainerFormats[0];
         UpdateFreeSpace();
         PropertyChanged += PreviewPropertyChanged;
+        ToggleRecordingCommand.PropertyChanged += ToggleRecordingCommand_PropertyChanged;
     }
 
     public IReadOnlyList<CaptureModeOption> CaptureModes { get; } =
@@ -225,7 +226,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
 
     public bool IsVisualPickerEnabled => IsWindowMode || IsRegionMode;
 
-    public bool IsSettingsEnabled => !IsRecording;
+    public bool IsSettingsEnabled => !IsRecording && !ToggleRecordingCommand.IsRunning;
 
     public bool CanConfigureAudioCodec => !IsRecording && IsAudioSettingsEnabled && SelectedAudioCodec is not null;
 
@@ -462,6 +463,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     {
         _previewReady = false;
         PropertyChanged -= PreviewPropertyChanged;
+        ToggleRecordingCommand.PropertyChanged -= ToggleRecordingCommand_PropertyChanged;
         await SuspendPreviewAsync().ConfigureAwait(true);
         _statusTimer.Stop();
         await ShutdownAsync().ConfigureAwait(true);
@@ -661,6 +663,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         ResizeWindowCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(RecordButtonText));
         ToggleRecordingCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ToggleRecordingCommand_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(IAsyncRelayCommand.IsRunning))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(IsSettingsEnabled));
+        ResizeWindowCommand.NotifyCanExecuteChanged();
     }
 
     private void RefreshTargetItems()
