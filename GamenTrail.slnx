@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GamenTrail.App/GamenTrail.App.csproj" />
+    <Project Path="src/GamenTrail.Core/GamenTrail.Core.csproj" />
+    <Project Path="src/GamenTrail.Platform.Windows/GamenTrail.Platform.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GamenTrail.Tests/GamenTrail.Tests.csproj" />
+  </Folder>
+</Solution>
