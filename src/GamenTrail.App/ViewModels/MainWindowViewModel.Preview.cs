@@ -27,7 +27,7 @@ public sealed partial class MainWindowViewModel
     {
         if (e.PropertyName is nameof(SelectedTarget) or nameof(SelectedCaptureMode) or
             nameof(RegionX) or nameof(RegionY) or nameof(RegionWidth) or nameof(RegionHeight) or
-            nameof(IncludeCursor) or nameof(DisableWindowCornerRounding) or nameof(CaptureOverlappingWindows))
+            nameof(IncludeCursor) or nameof(DisableWindowCornerRounding))
         {
             QueuePreview();
         }
@@ -61,7 +61,7 @@ public sealed partial class MainWindowViewModel
             var target = CreateCaptureTarget(resolveWindow: false);
             var options = new VideoCaptureOptions(target, 10, IncludeCursor, DrawBorder: false,
                 DisableWindowCornerRounding: DisableWindowCornerRounding && !IsRecording,
-                CaptureOverlappingWindows: CaptureOverlappingWindows);
+                CaptureOverlappingWindows: CaptureOverlappingWindows && IsRecording);
             WriteableBitmap? bitmap = null;
             await foreach (var frame in WindowsCapturePreview.StreamAsync(options, cancellation.Token)
                 .ConfigureAwait(true))
