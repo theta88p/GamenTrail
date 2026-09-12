@@ -283,7 +283,10 @@
     <Grid Background="{StaticResource WindowBrush}">
         <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
         <Border Padding="44,16,44,15" Background="{StaticResource HeaderBrush}">
-            <StackPanel><TextBlock FontSize="34" FontWeight="Bold" Text="GamenTrail" /><TextBlock Margin="0,3,0,0" Foreground="{StaticResource SubtleBrush}" Text="画面の足跡を、そのまま残す。" /></StackPanel>
+            <Grid>
+                <StackPanel><TextBlock FontSize="34" FontWeight="Bold" Text="GamenTrail" /><TextBlock Margin="0,3,0,0" Foreground="{StaticResource SubtleBrush}" Text="画面の足跡を、そのまま残す。" /></StackPanel>
+                <TextBlock x:Name="VersionText" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontSize="12" Foreground="{StaticResource MutedBrush}" AutomationProperties.Name="アプリのバージョン" />
+            </Grid>
         </Border>
         <Grid Grid.Row="1" Margin="15,0" Height="58">
             <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition /><ColumnDefinition /></Grid.ColumnDefinitions>
