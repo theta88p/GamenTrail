@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
+using GamenTrail.Platform.Windows.Interop;
 
 namespace GamenTrail.App;
 
@@ -46,6 +48,7 @@ internal sealed partial class RecordingRegionBorderOverlay : Window
 
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
+        DpiChanged += OnDpiChanged;
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
@@ -57,11 +60,31 @@ internal sealed partial class RecordingRegionBorderOverlay : Window
             ExtendedWindowStyleIndex,
             extendedStyle | NoActivateStyle | ToolWindowStyle | TransparentStyle);
         _ = SetWindowDisplayAffinity(handle, ExcludeFromCaptureAffinity);
+        ApplyBounds(handle);
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         var handle = new WindowInteropHelper(this).Handle;
+        ApplyBounds(handle);
+        UpdateBorderThickness(GetDpiForWindow(handle));
+    }
+
+    private void OnDpiChanged(object sender, DpiChangedEventArgs e)
+    {
+        UpdateBorderThickness(e.NewDpi.PixelsPerInchX);
+
+        // WPF preserves the window's logical dimensions when handling WM_DPICHANGED.
+        // Reapply the capture rectangle after that handling so the border continues
+        // to use the same physical-pixel coordinates as Windows Graphics Capture.
+        _ = Dispatcher.BeginInvoke(
+            DispatcherPriority.Loaded,
+            new Action(() => ApplyBounds(new WindowInteropHelper(this).Handle)));
+    }
+
+    private void ApplyBounds(nint handle)
+    {
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
         _ = SetWindowPos(
             handle,
             TopmostWindow,
@@ -70,8 +93,10 @@ internal sealed partial class RecordingRegionBorderOverlay : Window
             _width + (BorderWidthInPixels * 2),
             _height + (BorderWidthInPixels * 2),
             NoActivatePositionFlag);
+    }
 
-        var dpi = GetDpiForWindow(handle);
+    private void UpdateBorderThickness(double dpi)
+    {
         var dpiScale = dpi == 0 ? 1d : dpi / 96d;
         var borderThickness = BorderWidthInPixels / dpiScale;
         _border.BorderThickness = new Thickness(borderThickness);

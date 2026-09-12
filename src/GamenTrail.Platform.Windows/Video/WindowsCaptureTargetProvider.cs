@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using GamenTrail.Core.Video;
+using GamenTrail.Platform.Windows.Interop;
 
 namespace GamenTrail.Platform.Windows.Video;
 
@@ -7,6 +8,7 @@ public sealed partial class WindowsCaptureTargetProvider : ICaptureTargetProvide
 {
     public IReadOnlyList<CaptureTargetDescriptor> GetMonitors()
     {
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
         var result = new List<CaptureTargetDescriptor>();
         var index = 0;
         EnumDisplayMonitors(0, 0, Callback, 0);
@@ -29,6 +31,7 @@ public sealed partial class WindowsCaptureTargetProvider : ICaptureTargetProvide
 
     public IReadOnlyList<CaptureTargetDescriptor> GetWindows()
     {
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
         var result = new List<CaptureTargetDescriptor>();
         EnumWindows(Callback, 0);
         return result;
@@ -47,6 +50,7 @@ public sealed partial class WindowsCaptureTargetProvider : ICaptureTargetProvide
 
     public static CaptureTargetDescriptor? GetWindow(nint window)
     {
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
         if (!IsWindowVisible(window) || GetWindowTextLength(window) == 0)
         {
             return null;
@@ -80,6 +84,7 @@ public sealed partial class WindowsCaptureTargetProvider : ICaptureTargetProvide
 
     public static CaptureTargetDescriptor? GetWindowScreenRegion(nint window)
     {
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
         var windowDescriptor = GetWindow(window);
         if (windowDescriptor is null)
         {
@@ -118,6 +123,7 @@ public sealed partial class WindowsCaptureTargetProvider : ICaptureTargetProvide
 
     public static CaptureTargetDescriptor? GetWindowAtPoint(int x, int y, nint excludedWindow)
     {
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
         CaptureTargetDescriptor? result = null;
         EnumWindows(Callback, 0);
         return result;
@@ -145,6 +151,7 @@ public sealed partial class WindowsCaptureTargetProvider : ICaptureTargetProvide
 
     public static CaptureTargetDescriptor? GetWindowAtCursor(nint excludedWindow)
     {
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
         return GetCursorPos(out var point)
             ? GetWindowAtPoint(point.X, point.Y, excludedWindow)
             : null;

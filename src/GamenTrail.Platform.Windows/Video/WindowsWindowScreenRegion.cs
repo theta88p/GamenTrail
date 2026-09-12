@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using GamenTrail.Core.Video;
+using GamenTrail.Platform.Windows.Interop;
 
 namespace GamenTrail.Platform.Windows.Video;
 
@@ -10,6 +11,7 @@ internal static partial class WindowsWindowScreenRegion
 
     public static CaptureTarget.Region Create(nint window)
     {
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
         if (!IsAvailable(window))
         {
             throw new InvalidOperationException("対象ウィンドウは既に閉じられています。");

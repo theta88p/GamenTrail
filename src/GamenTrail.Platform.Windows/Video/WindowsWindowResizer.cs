@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using GamenTrail.Platform.Windows.Interop;
 
 namespace GamenTrail.Platform.Windows.Video;
 
@@ -23,38 +24,26 @@ public static partial class WindowsWindowResizer
         }
 
         // GetWindowRect and SetWindowPos must use physical pixels at any display scale.
-        var previousContext = SetThreadDpiAwarenessContext(new nint(-4));
-        if (previousContext == 0)
+        using var dpiAwareness = new ThreadDpiAwarenessScope();
+        if (!GetWindowRect(window, out var outer))
         {
             throw new Win32Exception(Marshal.GetLastWin32Error());
         }
 
-        try
+        var visible = GetVisibleBounds(window);
+        // WGC excludes the invisible resize borders included by GetWindowRect.
+        // Measure them for this window/DPI instead of assuming a fixed border size.
+        var outerWidth = checked(width + (outer.Right - outer.Left) - (visible.Right - visible.Left));
+        var outerHeight = checked(height + (outer.Bottom - outer.Top) - (visible.Bottom - visible.Top));
+        const uint flags = 0x0002 | 0x0004 | 0x0010; // NOMOVE | NOZORDER | NOACTIVATE
+        if (!SetWindowPos(window, 0, 0, 0, outerWidth, outerHeight, flags))
         {
-            if (!GetWindowRect(window, out var outer))
-            {
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            }
-
-            var visible = GetVisibleBounds(window);
-            // WGC excludes the invisible resize borders included by GetWindowRect.
-            // Measure them for this window/DPI instead of assuming a fixed border size.
-            var outerWidth = checked(width + (outer.Right - outer.Left) - (visible.Right - visible.Left));
-            var outerHeight = checked(height + (outer.Bottom - outer.Top) - (visible.Bottom - visible.Top));
-            const uint flags = 0x0002 | 0x0004 | 0x0010; // NOMOVE | NOZORDER | NOACTIVATE
-            if (!SetWindowPos(window, 0, 0, 0, outerWidth, outerHeight, flags))
-            {
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            }
-
-            Marshal.ThrowExceptionForHR(DwmFlush());
-            var actual = GetVisibleBounds(window);
-            return (actual.Right - actual.Left, actual.Bottom - actual.Top);
+            throw new Win32Exception(Marshal.GetLastWin32Error());
         }
-        finally
-        {
-            SetThreadDpiAwarenessContext(previousContext);
-        }
+
+        Marshal.ThrowExceptionForHR(DwmFlush());
+        var actual = GetVisibleBounds(window);
+        return (actual.Right - actual.Left, actual.Bottom - actual.Top);
     }
 
     private static NativeRect GetVisibleBounds(nint window)
@@ -87,9 +76,6 @@ public static partial class WindowsWindowResizer
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool IsZoomed(nint window);
-
-    [LibraryImport("user32.dll", SetLastError = true)]
-    private static partial nint SetThreadDpiAwarenessContext(nint context);
 
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
