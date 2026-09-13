@@ -21,6 +21,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     private readonly IUserDialogService _dialogs;
     private readonly ISettingsService _settings;
     private readonly DispatcherTimer _statusTimer;
+    private readonly DispatcherTimer _audioMeterTimer;
     private readonly SynchronizationContext _uiContext;
     private IReadOnlyList<CaptureTargetDescriptor> _monitors = [];
     private IReadOnlyList<CaptureTargetDescriptor> _windows = [];
@@ -162,6 +163,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             DispatcherPriority.Background,
             OnStatusTimerTick,
             Dispatcher.CurrentDispatcher);
+        _audioMeterTimer = new DispatcherTimer(
+            TimeSpan.FromMilliseconds(50),
+            DispatcherPriority.Background,
+            OnAudioMeterTimerTick,
+            Dispatcher.CurrentDispatcher);
 
         SelectedCaptureMode = CaptureModes[0];
         SelectedAudioMode = AudioModes[0];
@@ -171,6 +177,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         SelectedContainerFormat = ContainerFormats[0];
         UpdateFreeSpace();
         PropertyChanged += PreviewPropertyChanged;
+        PropertyChanged += AudioMeterPropertyChanged;
         ToggleRecordingCommand.PropertyChanged += ToggleRecordingCommand_PropertyChanged;
     }
 
@@ -274,6 +281,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         }
         _previewReady = true;
         QueuePreview();
+        _audioMeterReady = true;
+        _audioMeterTimer.Start();
+        QueueAudioMeter();
     }
 
     [RelayCommand]
@@ -462,10 +472,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public async ValueTask DisposeAsync()
     {
         _previewReady = false;
+        _audioMeterReady = false;
         PropertyChanged -= PreviewPropertyChanged;
+        PropertyChanged -= AudioMeterPropertyChanged;
         ToggleRecordingCommand.PropertyChanged -= ToggleRecordingCommand_PropertyChanged;
         await SuspendPreviewAsync().ConfigureAwait(true);
         _statusTimer.Stop();
+        _audioMeterTimer.Stop();
+        await SuspendAudioMeterAsync().ConfigureAwait(true);
         await ShutdownAsync().ConfigureAwait(true);
     }
 
