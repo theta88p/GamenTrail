@@ -8,10 +8,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\GamenTrail.ico</ApplicationIcon>
     <AssemblyVersion>1.0.1.0</AssemblyVersion>
     <FileVersion>1.0.1.0</FileVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Switch.System.Windows.DoNotScaleForDpiChanges" Value="false" />
+  </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\GamenTrail.ico" />

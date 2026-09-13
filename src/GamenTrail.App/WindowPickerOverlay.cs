@@ -91,17 +91,37 @@ internal sealed class WindowPickerOverlay : Window
         return await overlay._completion.Task.ConfigureAwait(true);
     }
 
-    private void OnSourceInitialized(object? sender, EventArgs e) =>
+    private void OnSourceInitialized(object? sender, EventArgs e)
+    {
         _handle = new WindowInteropHelper(this).Handle;
+        VirtualScreenOverlay.ApplyBounds(this);
+    }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        VirtualScreenOverlay.ApplyBounds(this);
         _shade.Width = ActualWidth;
         _shade.Height = ActualHeight;
         Activate();
         Focus();
         UpdateTarget();
         _timer.Start();
+    }
+
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        _ = Dispatcher.BeginInvoke(
+            DispatcherPriority.Loaded,
+            new Action(() => VirtualScreenOverlay.ApplyBounds(this)));
+    }
+
+    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+    {
+        base.OnRenderSizeChanged(sizeInfo);
+        _shade.Width = ActualWidth;
+        _shade.Height = ActualHeight;
+        UpdateHighlight(_currentTarget);
     }
 
     private void UpdateTarget()

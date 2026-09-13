@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using GamenTrail.Core.Video;
 using GamenTrail.Platform.Windows.Video;
 
@@ -72,6 +73,7 @@ internal sealed class RegionPickerOverlay : Window
         });
         Content = root;
 
+        SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseMove += OnMouseMove;
@@ -79,6 +81,9 @@ internal sealed class RegionPickerOverlay : Window
         KeyDown += OnKeyDown;
         Closed += OnClosed;
     }
+
+    private void OnSourceInitialized(object? sender, EventArgs e) =>
+        VirtualScreenOverlay.ApplyBounds(this);
 
     public static async Task<(
         CaptureTargetDescriptor Monitor,
@@ -96,11 +101,31 @@ internal sealed class RegionPickerOverlay : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        VirtualScreenOverlay.ApplyBounds(this);
         _shade.Width = ActualWidth;
         _shade.Height = ActualHeight;
         UpdateHighlight(null);
         Activate();
         Focus();
+    }
+
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        _ = Dispatcher.BeginInvoke(
+            DispatcherPriority.Loaded,
+            new Action(() => VirtualScreenOverlay.ApplyBounds(this)));
+    }
+
+    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+    {
+        base.OnRenderSizeChanged(sizeInfo);
+        _shade.Width = ActualWidth;
+        _shade.Height = ActualHeight;
+        if (!_isDragging)
+        {
+            UpdateHighlight(null);
+        }
     }
 
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
