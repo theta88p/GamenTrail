@@ -47,6 +47,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (ViewModel.IsWindowMode)
+        {
+            ViewModel.RefreshTargetsCommand.Execute(null);
+        }
+
         await ViewModel.SuspendPreviewAsync().ConfigureAwait(true);
         var pickRegion = ViewModel.IsRegionMode;
         Hide();
